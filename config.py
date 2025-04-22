@@ -1,5 +1,5 @@
 # config.py
 
-API_ID = 123456  # Ganti dengan API_ID kamu
-API_HASH = "your_api_hash"
-BOT_TOKEN = "your_bot_token"
+API_ID = 22231144  # Ganti dengan API_ID kamu
+API_HASH = "772292211b49baaae83b06b714576cd3"
+BOT_TOKEN = "7955360080:AAGjqYkBIshyrTYd1xWHIFgeqsIncnO6r3s"
