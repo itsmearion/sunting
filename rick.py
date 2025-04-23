@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from pyrogram import Client, filters
+from pyrogram.errors import FloodWait
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import API_ID, API_HASH, BOT_TOKEN
 from utils.logger import setup_logger
@@ -16,8 +17,26 @@ app = Client(
     "blakeshley_bot",
     api_id=API_ID,
     api_hash=API_HASH,
-    bot_token=BOT_TOKEN
+    bot_token=BOT_TOKEN,
+    parse_mode="html"  # supaya gak perlu nulis parse_mode tiap kirim pesan
 )
+
+# Function to send message + auto delete after 7 minutes
+async def send_and_auto_delete(client, chat_id, text, reply_markup=None):
+    try:
+        sent = await client.send_message(
+            chat_id,
+            text,
+            reply_markup=reply_markup
+        )
+        await asyncio.sleep(420)  # 7 menit
+        await sent.delete()
+    except FloodWait as e:
+        logger.warning(f"FloodWait: tidur {e.value} detik")
+        await asyncio.sleep(e.value)
+        return await send_and_auto_delete(client, chat_id, text, reply_markup)
+    except Exception as e:
+        logger.error(f"Error di send_and_auto_delete: {e}")
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -38,12 +57,13 @@ async def start(client, message):
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("ᯓ ✎ format your wishes ✎", callback_data="format")]
         ])
-        await client.send_message(
-            chat_id,
-            WELCOME_MESSAGES[2],
-            reply_markup=keyboard
-        )
 
+        await send_and_auto_delete(client, chat_id, WELCOME_MESSAGES[2], reply_markup=keyboard)
+
+    except FloodWait as e:
+        logger.warning(f"FloodWait di /start: tidur {e.value} detik")
+        await asyncio.sleep(e.value)
+        await start(client, message)
     except Exception as e:
         logger.error(f"Terjadi kesalahan saat mengirim pesan start: {e}")
 
@@ -59,28 +79,29 @@ async def format_button(client, callback_query):
             [InlineKeyboardButton("ᯓ ✎ Copy Here", switch_inline_query_current_chat=text)]
         ])
 
-        # Format teks
         formatted_text = f"<b>Copy and Paste This:</b>\n\n<code>{text}</code>"
 
         sent = await callback_query.message.reply_text(
             formatted_text,
-            parse_mode="HTML",
             reply_markup=keyboard
         )
 
         await asyncio.sleep(420)  # 7 menit
         await sent.delete()
 
+        # Hapus pesan tombol format
         try:
             await callback_query.message.delete()
         except Exception as e:
             logger.warning(f"Gagal menghapus pesan tombol format: {e}")
 
-        await client.send_message(
-            callback_query.message.chat.id,
-            "༄ the magic fades into the mist... ༄"
-        )
+        # Kirim pesan "magic fades" + auto delete
+        await send_and_auto_delete(client, callback_query.message.chat.id, "༄ the magic fades into the mist... ༄")
 
+    except FloodWait as e:
+        logger.warning(f"FloodWait di format_button: tidur {e.value} detik")
+        await asyncio.sleep(e.value)
+        await format_button(client, callback_query)
     except Exception as e:
         logger.error(f"Terjadi kesalahan dalam alur tombol format: {e}")
 
