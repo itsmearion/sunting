@@ -1,16 +1,16 @@
-# bot.py
-
 import asyncio
+import logging
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import API_ID, API_HASH, BOT_TOKEN
 from utils.logger import setup_logger
 from utils.theme import WELCOME_MESSAGES
 from utils.format_text import generate_order_format
-import logging
 from utils.database import update_mapping
 
+# Setup logging
 setup_logger()
+logger = logging.getLogger(__name__)
 
 app = Client(
     "blakeshley_bot",
@@ -34,7 +34,7 @@ async def start(client, message):
         await asyncio.sleep(3)
         await second.delete()
 
-        # Teks ketiga + menu
+        # Teks ketiga + tombol
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("ᯓ ✎ format your wishes ✎", callback_data="format")]
         ])
@@ -45,7 +45,7 @@ async def start(client, message):
         )
 
     except Exception as e:
-        app.logger.error(f"Terjadi kesalahan saat mengirim pesan start: {e}")
+        logger.error(f"Terjadi kesalahan saat mengirim pesan start: {e}")
 
 @app.on_callback_query(filters.regex("format"))
 async def format_button(client, callback_query):
@@ -59,11 +59,12 @@ async def format_button(client, callback_query):
             [InlineKeyboardButton("ᯓ ✎ Copy Here", switch_inline_query_current_chat=text)]
         ])
 
-        # Kirim format
-        formatted_text = f"*Copy and Paste This:*\n\n```{text}```"
+        # Format teks
+        formatted_text = f"<b>Copy and Paste This:</b>\n\n<code>{text}</code>"
+
         sent = await callback_query.message.reply_text(
             formatted_text,
-            parse_mode="Markdown",
+            parse_mode="HTML",
             reply_markup=keyboard
         )
 
@@ -73,20 +74,15 @@ async def format_button(client, callback_query):
         try:
             await callback_query.message.delete()
         except Exception as e:
-            app.logger.warning(f"Gagal menghapus pesan tombol format: {e}")
+            logger.warning(f"Gagal menghapus pesan tombol format: {e}")
 
         await client.send_message(
             callback_query.message.chat.id,
             "༄ the magic fades into the mist... ༄"
         )
 
-    try:
-    sent = await callback_query.message.reply_text(
-        "Teks",
-        parse_mode="HTML"
-    )
-except Exception as e:
-    logger.error(f"Terjadi kesalahan dalam alur tombol format: {e}")
+    except Exception as e:
+        logger.error(f"Terjadi kesalahan dalam alur tombol format: {e}")
 
 if __name__ == "__main__":
     app.run()
