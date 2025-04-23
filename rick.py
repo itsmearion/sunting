@@ -7,6 +7,7 @@ from config import API_ID, API_HASH, BOT_TOKEN
 from utils.logger import setup_logger
 from utils.theme import WELCOME_MESSAGES
 from utils.format_text import generate_order_format
+import logging
 from utils.database import update_mapping
 
 setup_logger()
