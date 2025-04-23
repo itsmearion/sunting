@@ -80,7 +80,10 @@ async def format_button(client, callback_query):
         )
 
     except Exception as e:
-        app.logger.error(f"Terjadi kesalahan dalam alur tombol format: {e}")
+        logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.error(f"Terjadi kesalahan dalam alur tombol format: {e}")
 
 if __name__ == "__main__":
     app.run()
